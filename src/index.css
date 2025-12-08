@@ -1,0 +1,298 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* 
+  Design System - Quiz de Aniversário de Noivado
+  Paleta: Creme, Rosé Gold, Branco
+  Estilo: Romântico, Minimalista, Elegante
+*/
+
+@layer base {
+  :root {
+    /* Cores Principais - Paleta Romântica */
+    --background: 30 30% 96%; /* Creme claro */
+    --foreground: 20 15% 20%; /* Marrom escuro suave */
+
+    --card: 30 25% 98%; /* Branco creme */
+    --card-foreground: 20 15% 20%;
+
+    --popover: 30 25% 98%;
+    --popover-foreground: 20 15% 20%;
+
+    --primary: 15 45% 65%; /* Rosé Gold */
+    --primary-foreground: 30 30% 98%;
+
+    --secondary: 30 20% 92%; /* Creme mais escuro */
+    --secondary-foreground: 20 15% 25%;
+
+    --muted: 30 15% 90%;
+    --muted-foreground: 20 10% 45%;
+
+    --accent: 15 50% 70%; /* Rosé mais vibrante */
+    --accent-foreground: 30 30% 98%;
+
+    --destructive: 0 65% 55%;
+    --destructive-foreground: 30 30% 98%;
+
+    --success: 145 45% 45%;
+    --success-foreground: 30 30% 98%;
+
+    --border: 30 20% 88%;
+    --input: 30 20% 88%;
+    --ring: 15 45% 65%;
+
+    --radius: 1rem;
+
+    /* Gradientes Românticos */
+    --gradient-romantic: linear-gradient(135deg, hsl(30 30% 96%) 0%, hsl(15 30% 92%) 50%, hsl(30 25% 94%) 100%);
+    --gradient-gold: linear-gradient(135deg, hsl(15 45% 65%) 0%, hsl(25 55% 70%) 50%, hsl(15 50% 60%) 100%);
+    --gradient-card: linear-gradient(180deg, hsl(30 25% 99%) 0%, hsl(30 20% 96%) 100%);
+
+    /* Sombras Elegantes */
+    --shadow-soft: 0 4px 20px hsl(15 30% 70% / 0.15);
+    --shadow-glow: 0 0 30px hsl(15 45% 65% / 0.25);
+    --shadow-card: 0 8px 32px hsl(20 20% 50% / 0.12);
+
+    /* Sidebar - mantendo compatibilidade */
+    --sidebar-background: 30 25% 97%;
+    --sidebar-foreground: 20 15% 25%;
+    --sidebar-primary: 15 45% 65%;
+    --sidebar-primary-foreground: 30 30% 98%;
+    --sidebar-accent: 30 20% 92%;
+    --sidebar-accent-foreground: 20 15% 25%;
+    --sidebar-border: 30 20% 88%;
+    --sidebar-ring: 15 45% 65%;
+  }
+
+  .dark {
+    --background: 20 15% 12%;
+    --foreground: 30 25% 95%;
+
+    --card: 20 15% 15%;
+    --card-foreground: 30 25% 95%;
+
+    --popover: 20 15% 15%;
+    --popover-foreground: 30 25% 95%;
+
+    --primary: 15 50% 60%;
+    --primary-foreground: 20 15% 10%;
+
+    --secondary: 20 15% 20%;
+    --secondary-foreground: 30 25% 95%;
+
+    --muted: 20 15% 25%;
+    --muted-foreground: 30 15% 65%;
+
+    --accent: 15 50% 55%;
+    --accent-foreground: 20 15% 10%;
+
+    --destructive: 0 60% 45%;
+    --destructive-foreground: 30 30% 98%;
+
+    --success: 145 40% 40%;
+    --success-foreground: 30 30% 98%;
+
+    --border: 20 15% 25%;
+    --input: 20 15% 25%;
+    --ring: 15 50% 60%;
+
+    --sidebar-background: 20 15% 10%;
+    --sidebar-foreground: 30 20% 90%;
+    --sidebar-primary: 15 50% 60%;
+    --sidebar-primary-foreground: 20 15% 10%;
+    --sidebar-accent: 20 15% 18%;
+    --sidebar-accent-foreground: 30 20% 90%;
+    --sidebar-border: 20 15% 22%;
+    --sidebar-ring: 15 50% 60%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground antialiased;
+    background: var(--gradient-romantic);
+    min-height: 100vh;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    font-family: 'Playfair Display', serif;
+  }
+
+  p, span, button, input, textarea {
+    font-family: 'Lato', sans-serif;
+  }
+}
+
+@layer components {
+  /* Botão Romântico Principal */
+  .btn-romantic {
+    @apply relative overflow-hidden px-8 py-4 text-lg font-medium rounded-full;
+    @apply bg-primary text-primary-foreground;
+    @apply transition-all duration-300 ease-out;
+    @apply hover:scale-105 active:scale-95;
+    box-shadow: var(--shadow-soft);
+  }
+
+  .btn-romantic:hover {
+    box-shadow: var(--shadow-glow);
+  }
+
+  /* Card Elegante */
+  .card-elegant {
+    @apply rounded-2xl p-6;
+    background: var(--gradient-card);
+    box-shadow: var(--shadow-card);
+    backdrop-filter: blur(10px);
+  }
+
+  /* Cupom Dourado */
+  .golden-coupon {
+    @apply relative rounded-xl p-8 text-center overflow-hidden;
+    background: var(--gradient-gold);
+    box-shadow: var(--shadow-glow);
+  }
+
+  .golden-coupon::before {
+    content: '';
+    @apply absolute inset-0;
+    background: linear-gradient(90deg, transparent, hsl(45 80% 80% / 0.3), transparent);
+    animation: shimmer 2s infinite;
+  }
+
+  /* Opção de Resposta */
+  .answer-option {
+    @apply w-full px-6 py-4 text-left rounded-xl border-2 border-border;
+    @apply bg-card text-card-foreground font-medium;
+    @apply transition-all duration-200 ease-out;
+    @apply hover:border-primary hover:bg-secondary;
+    @apply active:scale-[0.98];
+  }
+
+  .answer-option.correct {
+    @apply border-success bg-success/10 text-success;
+    animation: pulse-success 0.5s ease-out;
+  }
+
+  .answer-option.incorrect {
+    @apply border-destructive bg-destructive/10;
+    animation: shake 0.5s ease-out;
+  }
+}
+
+@layer utilities {
+  /* Animação de entrada suave */
+  .animate-fade-up {
+    animation: fadeUp 0.6s ease-out forwards;
+  }
+
+  .animate-fade-in {
+    animation: fadeIn 0.5s ease-out forwards;
+  }
+
+  .animate-scale-in {
+    animation: scaleIn 0.4s ease-out forwards;
+  }
+
+  .animate-float {
+    animation: float 3s ease-in-out infinite;
+  }
+
+  .animate-pulse-soft {
+    animation: pulseSoft 2s ease-in-out infinite;
+  }
+}
+
+/* Keyframes */
+@keyframes fadeUp {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes scaleIn {
+  from {
+    opacity: 0;
+    transform: scale(0.9);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes float {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-10px);
+  }
+}
+
+@keyframes pulseSoft {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.7;
+  }
+}
+
+@keyframes shimmer {
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(100%);
+  }
+}
+
+@keyframes shake {
+  0%, 100% {
+    transform: translateX(0);
+  }
+  20%, 60% {
+    transform: translateX(-8px);
+  }
+  40%, 80% {
+    transform: translateX(8px);
+  }
+}
+
+@keyframes pulse-success {
+  0% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.02);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+/* Delay utilities para animações escalonadas */
+.delay-100 { animation-delay: 100ms; }
+.delay-200 { animation-delay: 200ms; }
+.delay-300 { animation-delay: 300ms; }
+.delay-400 { animation-delay: 400ms; }
+.delay-500 { animation-delay: 500ms; }
