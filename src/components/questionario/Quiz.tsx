@@ -560,27 +560,39 @@ const Quiz: React.FC = () => {
           {/* Se estiver bloqueado por tempo, mostra o cronômetro */}
           {isTimeLocked && config.unlockDate ? (
             <div className="mb-8">
-              <div className="p-4 bg-muted/30 rounded-lg border border-dashed border-primary/40">
-                <p className="font-lato text-primary font-semibold mb-2">Este presente está guardado para o momento certo.</p>
-                <CountdownDisplay targetDate={config.unlockDate} onUnlock={handleUnlock} />
-              </div>
-              <button className="btn-romantic mt-6 opacity-50 cursor-not-allowed" disabled>
-                Aguarde o momento...
+              <CountdownDisplay targetDate={config.unlockDate} onUnlock={handleUnlock} />
+              <button className="btn-romantic mt-6 opacity-50 cursor-not-allowed w-full py-3" disabled>
+                Aguarde... 🔒
               </button>
             </div>
           ) : (
-            <div className="flex flex-col sm:flex-row justify-center items-center gap-4 w-full">
-              <button className="btn-romantic w-full sm:w-auto" onClick={() => setQuizStarted(true)}>
+            /* --- INICIO DA ALTERAÇÃO DOS BOTÕES --- */
+            <div className="flex flex-col sm:flex-row justify-center items-center gap-4 w-full mt-6">            
+              <button 
+                className="btn-romantic w-full sm:w-auto sm:min-w-[200px] shadow-lg hover:scale-105 transition-transform" 
+                onClick={() => setQuizStarted(true)}
+              >
                 Começar o Quiz!
               </button>
-
+              
               {!isReadOnly && (
                 <>
-                  <button className="btn-romantic w-full sm:w-auto" onClick={() => setIsEditing(true)}>Editar Perguntas</button>
-                  <button className="btn-romantic w-full sm:w-auto" onClick={handleShare}>Compartilhar</button>
+                  <button 
+                    className="btn-romantic w-full sm:w-auto sm:min-w-[200px] shadow-lg hover:scale-105 transition-transform" 
+                    onClick={() => setIsEditing(true)}
+                  >
+                    Editar Perguntas
+                  </button>
+                  <button 
+                    className="btn-romantic w-full sm:w-auto sm:min-w-[200px] shadow-lg hover:scale-105 transition-transform" 
+                    onClick={handleShare}
+                  >
+                    Compartilhar
+                  </button>
                 </>
               )}
             </div>
+            /* --- FIM DA ALTERAÇÃO DOS BOTÕES --- */
           )}
         </div>
       </main>
