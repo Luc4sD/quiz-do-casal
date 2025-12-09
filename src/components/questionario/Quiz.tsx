@@ -106,6 +106,7 @@ const CountdownDisplay = ({ targetDate, onUnlock }: { targetDate: string, onUnlo
 
   useEffect(() => {
     const calculateTimeLeft = () => {
+      if (!targetDate) return null;
       const difference = new Date(targetDate).getTime() - new Date().getTime();
       
       if (difference > 0) {
@@ -116,7 +117,7 @@ const CountdownDisplay = ({ targetDate, onUnlock }: { targetDate: string, onUnlo
           seconds: Math.floor((difference / 1000) % 60),
         };
       } else {
-        onUnlock(); // Chama a função de desbloqueio
+        onUnlock(); 
         return null;
       }
     };
@@ -135,29 +136,32 @@ const CountdownDisplay = ({ targetDate, onUnlock }: { targetDate: string, onUnlo
   if (!timeLeft) return null;
 
   return (
-    <div className="mt-6 p-4 bg-secondary/50 rounded-xl border border-primary/20 animate-pulse-soft">
-      <div className="flex items-center justify-center gap-2 mb-3 text-primary font-bold">
-        <Clock className="w-5 h-5" />
-        <span>Disponível em:</span>
+    <div className="mt-6 p-6 bg-secondary/50 rounded-xl border border-primary/20 animate-pulse-soft shadow-inner">
+      <div className="flex items-center justify-center gap-2 mb-4 text-primary font-bold">
+        <Clock className="w-6 h-6" />
+        <span className="text-lg">Disponível em:</span>
       </div>
-      <div className="grid grid-cols-4 gap-2 text-center">
-        <div className="bg-background rounded-lg p-2 shadow-sm">
-          <span className="block text-xl font-bold font-playfair text-primary">{timeLeft.days}</span>
-          <span className="text-xs text-muted-foreground">Dias</span>
+      <div className="grid grid-cols-4 gap-3 text-center">
+        <div className="bg-background rounded-lg p-3 shadow-sm border border-input">
+          <span className="block text-2xl font-bold font-playfair text-primary">{timeLeft.days}</span>
+          <span className="text-xs uppercase tracking-wide text-muted-foreground">Dias</span>
         </div>
-        <div className="bg-background rounded-lg p-2 shadow-sm">
-          <span className="block text-xl font-bold font-playfair text-primary">{timeLeft.hours}</span>
-          <span className="text-xs text-muted-foreground">Horas</span>
+        <div className="bg-background rounded-lg p-3 shadow-sm border border-input">
+          <span className="block text-2xl font-bold font-playfair text-primary">{timeLeft.hours}</span>
+          <span className="text-xs uppercase tracking-wide text-muted-foreground">Horas</span>
         </div>
-        <div className="bg-background rounded-lg p-2 shadow-sm">
-          <span className="block text-xl font-bold font-playfair text-primary">{timeLeft.minutes}</span>
-          <span className="text-xs text-muted-foreground">Min</span>
+        <div className="bg-background rounded-lg p-3 shadow-sm border border-input">
+          <span className="block text-2xl font-bold font-playfair text-primary">{timeLeft.minutes}</span>
+          <span className="text-xs uppercase tracking-wide text-muted-foreground">Min</span>
         </div>
-        <div className="bg-background rounded-lg p-2 shadow-sm">
-          <span className="block text-xl font-bold font-playfair text-primary">{timeLeft.seconds}</span>
-          <span className="text-xs text-muted-foreground">Seg</span>
+        <div className="bg-background rounded-lg p-3 shadow-sm border border-input">
+          <span className="block text-2xl font-bold font-playfair text-primary">{timeLeft.seconds}</span>
+          <span className="text-xs uppercase tracking-wide text-muted-foreground">Seg</span>
         </div>
       </div>
+      <p className="text-center text-sm text-muted-foreground mt-4">
+        Volte aqui nesta data para desbloquear seu presente!
+      </p>
     </div>
   );
 };
