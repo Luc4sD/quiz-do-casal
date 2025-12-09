@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import Swal from 'sweetalert2';
 import confetti from 'canvas-confetti';
-import { Heart, Gift, Sparkles } from 'lucide-react';
+import { Heart, Gift, Sparkles, Clock, Calendar } from 'lucide-react';
 
 // --- Definição dos Tipos ---
 type Option = {
@@ -27,6 +27,7 @@ type QuizConfig = {
   startIcon: string;
   questions: Question[];
   prize: Prize;
+  unlockDate?: string; // NOVO CAMPO: Data de desbloqueio
 };
 
 // --- Funções Utilitárias para Base64 ---
@@ -43,8 +44,7 @@ function b64DecodeUnicode(str: string) {
   return decodeURIComponent(atob(str).split('').map(function(c) {
       return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
   }).join(''));
-}
-// --- Dados Iniciais do Quiz (pode ser personalizado) ---
+}// --- Dados Iniciais do Quiz ---
 const initialQuizQuestions: Question[] = [
   {
     questionText: 'Qual foi o local do nosso primeiro encontro?',
@@ -86,8 +86,9 @@ const initialQuizConfig: QuizConfig = {
   prize: {
     title: 'Vale Jantar Romântico',
     subtitle: 'Um vale-jantar no nosso restaurante favorito para celebrarmos nosso amor!',
-    validity: 'Válido para sempre, assim como nosso amor.'
-  }
+    validity: 'Válido para sempre, assim como nosso amor.',
+  },
+  unlockDate: '' // Inicialmente vazio
 };
 
 const blankQuizConfig: QuizConfig = {
@@ -95,7 +96,70 @@ const blankQuizConfig: QuizConfig = {
   subtitle: 'Subtítulo do Quiz',
   startIcon: '✏️',
   questions: [{ questionText: 'Nova Pergunta', options: [{ text: 'Opção Correta', isCorrect: true }, { text: 'Opção 2', isCorrect: false }], explanation: 'Explicação da resposta.' }],
-  prize: { title: 'Prêmio Final', subtitle: 'Descrição do prêmio', validity: 'Detalhes de validade' }
+  prize: { title: 'Prêmio Final', subtitle: 'Descrição do prêmio', validity: 'Detalhes de validade' },
+  unlockDate: ''
+};
+
+// --- Componente de Cronômetro ---
+const CountdownDisplay = ({ targetDate, onUnlock }: { targetDate: string, onUnlock: () => void }) => {
+  const [timeLeft, setTimeLeft] = useState<{days: number, hours: number, minutes: number, seconds: number} | null>(null);
+
+  useEffect(() => {
+    const calculateTimeLeft = () => {
+      const difference = new Date(targetDate).getTime() - new Date().getTime();
+      
+      if (difference > 0) {
+        return {
+          days: Math.floor(difference / (1000 * 60 * 60 * 24)),
+          hours: Math.floor((difference / (1000 * 60 * 60)) % 24),
+          minutes: Math.floor((difference / 1000 / 60) % 60),
+          seconds: Math.floor((difference / 1000) % 60),
+        };
+      } else {
+        onUnlock(); // Chama a função de desbloqueio
+        return null;
+      }
+    };
+
+    // Calcula imediatamente
+    setTimeLeft(calculateTimeLeft());
+
+    // Atualiza a cada segundo
+    const timer = setInterval(() => {
+      setTimeLeft(calculateTimeLeft());
+    }, 1000);
+
+    return () => clearInterval(timer);
+  }, [targetDate, onUnlock]);
+
+  if (!timeLeft) return null;
+
+  return (
+    <div className="mt-6 p-4 bg-secondary/50 rounded-xl border border-primary/20 animate-pulse-soft">
+      <div className="flex items-center justify-center gap-2 mb-3 text-primary font-bold">
+        <Clock className="w-5 h-5" />
+        <span>Disponível em:</span>
+      </div>
+      <div className="grid grid-cols-4 gap-2 text-center">
+        <div className="bg-background rounded-lg p-2 shadow-sm">
+          <span className="block text-xl font-bold font-playfair text-primary">{timeLeft.days}</span>
+          <span className="text-xs text-muted-foreground">Dias</span>
+        </div>
+        <div className="bg-background rounded-lg p-2 shadow-sm">
+          <span className="block text-xl font-bold font-playfair text-primary">{timeLeft.hours}</span>
+          <span className="text-xs text-muted-foreground">Horas</span>
+        </div>
+        <div className="bg-background rounded-lg p-2 shadow-sm">
+          <span className="block text-xl font-bold font-playfair text-primary">{timeLeft.minutes}</span>
+          <span className="text-xs text-muted-foreground">Min</span>
+        </div>
+        <div className="bg-background rounded-lg p-2 shadow-sm">
+          <span className="block text-xl font-bold font-playfair text-primary">{timeLeft.seconds}</span>
+          <span className="text-xs text-muted-foreground">Seg</span>
+        </div>
+      </div>
+    </div>
+  );
 };
 
 const Quiz: React.FC = () => {
@@ -107,9 +171,10 @@ const Quiz: React.FC = () => {
   const [selectedOption, setSelectedOption] = useState<Option | null>(null);
   const [isAnswered, setIsAnswered] = useState(false);
   const [showResults, setShowResults] = useState(false);
+  const [isReadOnly, setIsReadOnly] = useState(false);
   
-  // Estado para controlar se é apenas visualização (recebeu link)
-  const [isReadOnly, setIsReadOnly] = useState(false); 
+  // Estado para controlar o bloqueio de tempo
+  const [isTimeLocked, setIsTimeLocked] = useState(false);
 
   useEffect(() => {
     try {
@@ -122,7 +187,15 @@ const Quiz: React.FC = () => {
         const parsedData = JSON.parse(jsonString);
         setConfig(parsedData);
         setIsReadOnly(true); 
-        // OBS: Não limpamos mais a URL aqui para garantir que o estado persista se a página recarregar
+        
+        // Verifica se existe data de bloqueio
+        if (parsedData.unlockDate) {
+          const now = new Date().getTime();
+          const unlockTime = new Date(parsedData.unlockDate).getTime();
+          if (now < unlockTime) {
+            setIsTimeLocked(true);
+          }
+        }
       } else {
         // Se NÃO tem dados na URL, verificamos o LocalStorage (modo Editor)
         const savedData = localStorage.getItem('customQuizData');
@@ -131,13 +204,25 @@ const Quiz: React.FC = () => {
         }
       }
     } catch (error) {
-      console.error("Falha ao carregar dados da URL ou localStorage", error);
+      console.error("Falha ao carregar dados", error);
       setConfig(initialQuizConfig);
     }
   }, []);
 
   const currentQuestion = config.questions[currentQuestionIndex];
 
+  // Função chamada quando o cronômetro chega a zero
+  const handleUnlock = () => {
+    setIsTimeLocked(false);
+    Swal.fire({
+      title: 'Chegou a hora! ⏰',
+      text: 'O quiz foi desbloqueado. Divirta-se, meu amor!',
+      icon: 'success',
+      confirmButtonColor: 'hsl(15, 45%, 65%)',
+    });
+  };
+
+  // Funções de Gameplay
   const handleAnswerOptionClick = (option: Option) => {
     if (isAnswered) return;
 
@@ -155,11 +240,7 @@ const Quiz: React.FC = () => {
         background: 'hsl(30, 25%, 98%)',
         color: 'hsl(20, 15%, 20%)',
         customClass: {
-          popup: 'rounded-2xl',
-          title: 'font-playfair',
-          htmlContainer: 'font-lato'
-        }
-      }).then(() => {
+          popup: 'rounded-2xl', title: 'font-playfair', htmlContainer: 'font-lato'        }      }).then(() => {
         const nextQuestion = currentQuestionIndex + 1;
         if (nextQuestion < config.questions.length) {
           setCurrentQuestionIndex(nextQuestion);
@@ -180,16 +261,13 @@ const Quiz: React.FC = () => {
         background: 'hsl(30, 25%, 98%)',
         color: 'hsl(20, 15%, 20%)',
         customClass: {
-          popup: 'rounded-2xl',
-          title: 'font-playfair',
-          htmlContainer: 'font-lato'
-        }
-      }).then(() => {
+          popup: 'rounded-2xl', title: 'font-playfair', htmlContainer: 'font-lato'        }      }).then(() => {
         setIsAnswered(false);
         setSelectedOption(null);
       });
     }
   };
+  // Funções de Edição
   const handleQuestionChange = (qIndex: number, field: 'questionText' | 'explanation', value: string) => {
     const newQuestions = [...config.questions];
     newQuestions[qIndex][field] = value;
@@ -237,15 +315,14 @@ const Quiz: React.FC = () => {
     Swal.fire('Salvo!', 'Seu quiz foi salvo com sucesso.', 'success');
   };
 
-  // Botão para o Jogador criar o próprio quiz ao final
+  // Botão para o Jogador criar o próprio quiz ao final (Limpa a URL)
   const handleCreateOwn = () => {
-     window.location.href = window.location.pathname; // Recarrega sem parametros
+     window.location.href = window.location.pathname; 
   }
 
   const handleShare = () => {
     const jsonString = JSON.stringify(config);
     const base64String = b64EncodeUnicode(jsonString);
-    // É importante codificar a string base64 para que ela seja segura para uso em URLs
     const url = `${window.location.origin}${window.location.pathname}?data=${encodeURIComponent(base64String)}`;
 
     if (navigator.share) {
@@ -301,7 +378,7 @@ const Quiz: React.FC = () => {
     }
   }, [showResults]);
 
-  // --- TELA DE EDIÇÃO (Visível apenas para o Editor) ---
+  // --- Tela de Edição ---
   if (isEditing) {
     return (
       <main className="container mx-auto p-4">
@@ -335,8 +412,7 @@ const Quiz: React.FC = () => {
                 <button
                   onClick={() => removeQuestion(qIndex)}
                   disabled={config.questions.length <= 1}
-                  className="inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 border border-input bg-transparent shadow-sm hover:bg-accent hover:text-accent-foreground h-9 px-4 py-2 text-destructive hover:bg-destructive/10 disabled:cursor-not-allowed"
-                >
+                  className="text-destructive hover:bg-destructive/10 px-4 py-2 rounded">
                   Remover
                 </button>
               </div>
@@ -358,7 +434,7 @@ const Quiz: React.FC = () => {
                       name={`correct-option-${qIndex}`}
                       checked={option.isCorrect}
                       onChange={() => handleCorrectOptionChange(qIndex, oIndex)}
-                      className="h-4 w-4 text-primary focus:ring-primary border-gray-300"
+                      className="h-4 w-4 text-primary focus:ring-primary"
                     />
                     <input
                       type="text"
@@ -380,6 +456,8 @@ const Quiz: React.FC = () => {
               </label>
             </div>
           ))}
+          
+          {/* Seção de Prêmios e Ícone (mantida simplificada para brevidade, mas está aqui) */}
           <div className="mt-12 pt-8 border-t border-input/30">
             <h2 className="text-2xl font-bold mb-4 text-center">Editar Prêmio</h2>
             <label className="block text-lg font-semibold mb-2">
@@ -412,7 +490,6 @@ const Quiz: React.FC = () => {
           </div>
           <div className="mt-12 pt-8 border-t border-input/30">
             <h2 className="text-2xl font-bold mb-4 text-center">Editar Ícone Inicial</h2>
-            <p className="text-center text-muted-foreground mb-4">Digite o caractere que aparecerá no coração da tela inicial (ex: ?, 1, ❤️). Deixe em branco para nenhum.</p>
             <div className="flex justify-center">
                 <input
                   type="text"
@@ -428,9 +505,7 @@ const Quiz: React.FC = () => {
               className="btn-romantic"
               onClick={addQuestion}
               disabled={config.questions.length >= 10}
-            >
-              Adicionar Pergunta ({config.questions.length}/10)
-            </button>
+            >Adicionar Pergunta ({config.questions.length}/10)</button>
             <button className="btn-romantic" onClick={saveChanges}>
               Salvar Alterações
             </button>
@@ -440,25 +515,15 @@ const Quiz: React.FC = () => {
     );
   }
 
-  // --- TELA INICIAL (Boas-vindas) ---
+  // --- TELA INICIAL (Boas-vindas + Lógica de Bloqueio) ---
   if (!quizStarted) {
     return (
       <main className="container mx-auto p-4 flex flex-col items-center justify-center min-h-screen px-6 py-12">
         {/* Decoração de corações flutuantes */}
-        <div className="absolute top-10 left-10 text-primary/30 animate-float">
-          <Heart className="w-8 h-8" fill="currentColor" />
-        </div>
-        <div className="absolute top-20 right-12 text-primary/20 animate-float delay-300">
-          <Heart className="w-6 h-6" fill="currentColor" />
-        </div>
-        <div className="absolute bottom-32 left-8 text-primary/25 animate-float delay-500">
-          <Heart className="w-7 h-7" fill="currentColor" />
-        </div>
-        <div className="absolute bottom-20 right-10 text-primary/30 animate-float delay-200">
-          <Heart className="w-5 h-5" fill="currentColor" />
-        </div>
-
-        <div className="card-elegant text-center animate-fade-up">
+        <div className="absolute top-10 left-10 text-primary/30 animate-float"><Heart className="w-8 h-8" fill="currentColor" /></div>
+        <div className="absolute top-20 right-12 text-primary/20 animate-float delay-300"><Heart className="w-6 h-6" fill="currentColor" /></div>
+        
+        <div className="card-elegant text-center animate-fade-up max-w-md w-full">
           <div className="mb-6 flex justify-center">
             <div className="relative">
               <Heart 
@@ -466,9 +531,7 @@ const Quiz: React.FC = () => {
                 fill="currentColor" 
               />
               <div className="absolute inset-0 flex items-center justify-center">
-                <span className="text-primary-foreground font-playfair text-2xl font-bold">
-                  {config.startIcon}
-                </span>
+                <span className="text-primary-foreground font-playfair text-2xl font-bold">{config.startIcon}</span>
               </div>
             </div>
           </div>
@@ -476,49 +539,41 @@ const Quiz: React.FC = () => {
           <p className="font-lato text-lg text-muted-foreground mb-8 leading-relaxed">
             {config.subtitle}
           </p>
-          <div className="flex flex-col sm:flex-row justify-center items-center gap-4">            
-            <button className="btn-romantic" onClick={() => setQuizStarted(true)}>
-              Começar o Quiz!
-            </button>
-            
-            {/* Esconde botões de edição se for somente leitura */}
-            {!isReadOnly && (
-              <>
-                <button 
-                  className="btn-romantic"
-                  onClick={() => setIsEditing(true)}
-                >
-                  Editar Perguntas
-                </button>
-                <button className="btn-romantic" onClick={handleShare}>
-                  Compartilhar
-                </button>
-              </>
-            )}
-          </div>
+          
+          {/* Se estiver bloqueado por tempo, mostra o cronômetro */}
+          {isTimeLocked && config.unlockDate ? (
+            <div className="mb-8">
+              <div className="p-4 bg-muted/30 rounded-lg border border-dashed border-primary/40">
+                <p className="font-lato text-primary font-semibold mb-2">Este presente está guardado para o momento certo.</p>
+                <CountdownDisplay targetDate={config.unlockDate} onUnlock={handleUnlock} />
+              </div>
+              <button className="btn-romantic mt-6 opacity-50 cursor-not-allowed" disabled>
+                Aguarde o momento...
+              </button>
+            </div>
+          ) : (
+            <div className="flex flex-col sm:flex-row justify-center items-center gap-4">            
+              <button className="btn-romantic" onClick={() => setQuizStarted(true)}>
+                Começar o Quiz!
+              </button>
+              
+              {!isReadOnly && (
+                <>
+                  <button className="btn-romantic" onClick={() => setIsEditing(true)}>Editar Perguntas</button>
+                  <button className="btn-romantic" onClick={handleShare}>Compartilhar</button>
+                </>
+              )}
+            </div>
+          )}
         </div>
       </main>
     );
   }
 
-  // --- Tela de Resultados ---
+  // --- TELA DE RESULTADOS ---
   if (showResults) {
     return (
       <main className="min-h-screen flex flex-col items-center justify-center px-6 py-12">
-        {/* Decoração de corações */}
-        <div className="absolute top-8 left-6 text-primary/30 animate-float">
-          <Heart className="w-10 h-10" fill="currentColor" />
-        </div>
-        <div className="absolute top-16 right-8 text-primary/20 animate-float delay-300">
-          <Sparkles className="w-8 h-8" />
-        </div>
-        <div className="absolute bottom-24 left-10 text-primary/25 animate-float delay-500">
-          <Heart className="w-8 h-8" fill="currentColor" />
-        </div>
-        <div className="absolute bottom-32 right-6 text-primary/30 animate-float delay-200">
-          <Sparkles className="w-6 h-6" />
-        </div>
-
         <div className="max-w-md w-full text-center">
           <div className="mb-6 flex justify-center animate-fade-up">
             <div className="relative">
@@ -531,54 +586,36 @@ const Quiz: React.FC = () => {
             </div>
           </div>
 
-          <h1 className="font-playfair text-4xl md:text-5xl font-bold text-foreground mb-4 animate-fade-up delay-100">
-            Parabéns, meu amor!
-          </h1>
+          <h1 className="font-playfair text-4xl md:text-5xl font-bold text-foreground mb-4 animate-fade-up delay-100">Parabéns, meu amor!</h1>
           <p className="font-lato text-lg text-muted-foreground mb-8 leading-relaxed animate-fade-up delay-200">
             Você acertou {score} de {config.questions.length} perguntas!
           </p>
 
           <div className="golden-coupon animate-scale-in delay-300">
             <div className="relative z-10">
-              <div className="flex items-center justify-center gap-2 mb-4">
-                <div className="h-px w-12 bg-primary-foreground/30" />
-                <Sparkles className="w-5 h-5 text-primary-foreground" />
-                <div className="h-px w-12 bg-primary-foreground/30" />
-              </div>
               <h2 className="font-playfair text-2xl md:text-3xl font-bold text-primary-foreground mb-2">
                 🎁 CUPOM ESPECIAL 🎁
               </h2>
-              <div className="h-px w-3/4 mx-auto bg-primary-foreground/30 my-4" />
               <p className="font-playfair text-xl md:text-2xl font-semibold text-primary-foreground mb-2">
                 {config.prize.title}
               </p>
               <p className="font-lato text-primary-foreground/80 mb-4">
                 {config.prize.subtitle}
               </p>
-              <div className="mt-4 pt-4 border-t border-primary-foreground/20">
-                <p className="font-lato text-sm text-primary-foreground/70">
-                  {config.prize.validity}
-                </p>
-              </div>
+              <div className="mt-4 pt-4 border-t border-primary-foreground/20"><p className="font-lato text-sm text-primary-foreground/70">{config.prize.validity}</p></div>
             </div>
           </div>
-
-          <p className="mt-8 font-lato text-muted-foreground animate-fade-up delay-500">
-            Te amo infinitamente! ❤️
-          </p>
           
           {/* Opção para quem recebeu o link também criar o seu */}
           {isReadOnly && (
-             <button className="btn-romantic mt-8" onClick={handleCreateOwn}>
-               Criar meu próprio Quiz
-             </button>
+             <button className="btn-romantic mt-8" onClick={handleCreateOwn}>Criar meu próprio Quiz</button>
           )}
         </div>
       </main>
     );
   }
 
-  // --- TELA DE PERGUNTAS (Jogo Ativo) ---
+  // --- TELA DE PERGUNTAS ---
   return (
     <main className="container mx-auto p-4 flex items-center justify-center min-h-screen">
       <div className="w-full max-w-2xl">
@@ -591,20 +628,13 @@ const Quiz: React.FC = () => {
               <div className="flex items-center gap-1">
                 {Array.from({ length: config.questions.length }).map((_, i) => (
                   <Heart
-                    key={i}
-                    className={`w-4 h-4 transition-all duration-300 ${
-                      i < currentQuestionIndex + 1 
-                        ? "text-primary" 
-                        : "text-muted-foreground/30"
-                    }`}
-                    fill={i < currentQuestionIndex + 1 ? "currentColor" : "none"}
-                  />
+                    key={i} className={`w-4 h-4 transition-all duration-300 ${i < currentQuestionIndex + 1 ? "text-primary" : "text-muted-foreground/30"}`} fill={i < currentQuestionIndex + 1 ? "currentColor" : "none"} />
                 ))}
               </div>
             </div>
           </div>
 
-          <div className="mb-8 text-center">            
+          <div className="mb-8 text-center">
             <h2 className="text-3xl font-bold">{currentQuestion.questionText}</h2>
           </div>
 
@@ -619,11 +649,7 @@ const Quiz: React.FC = () => {
 
               return (
                 <button
-                  key={index}
-                  onClick={() => handleAnswerOptionClick(option)}
-                  className={getButtonClass()}
-                  disabled={isAnswered}
-                >
+                  key={index} onClick={() => handleAnswerOptionClick(option)} className={getButtonClass()} disabled={isAnswered}>
                   {option.text}
                 </button>
               );
