@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import Swal from 'sweetalert2';
 import confetti from 'canvas-confetti';
-import { Heart, Gift, Sparkles, Clock, Calendar } from 'lucide-react';
+import { Heart, Gift, Sparkles, Clock, Calendar } from 'lucide-react'; // Ícones já estavam corretos
 
 // --- Definição dos Tipos ---
 type Option = {
@@ -88,14 +88,19 @@ const initialQuizConfig: QuizConfig = {
     subtitle: 'Um vale-jantar no nosso restaurante favorito para celebrarmos nosso amor!',
     validity: 'Válido para sempre, assim como nosso amor.',
   },
-  unlockDate: '' // Inicialmente vazio
+  unlockDate: '' 
 };
 
 const blankQuizConfig: QuizConfig = {
   title: 'Título do Quiz',
   subtitle: 'Subtítulo do Quiz',
   startIcon: '✏️',
-  questions: [{ questionText: 'Nova Pergunta', options: [{ text: 'Opção Correta', isCorrect: true }, { text: 'Opção 2', isCorrect: false }], explanation: 'Explicação da resposta.' }],
+  questions: [{ questionText: 'Nova Pergunta', options: [
+    { text: 'Opção 1', isCorrect: true },
+    { text: 'Opção 2', isCorrect: false },
+    { text: 'Opção 3', isCorrect: false },
+    { text: 'Opção 4', isCorrect: false },
+  ], explanation: 'Explicação da resposta.' }],
   prize: { title: 'Prêmio Final', subtitle: 'Descrição do prêmio', validity: 'Detalhes de validade' },
   unlockDate: ''
 };
@@ -122,10 +127,8 @@ const CountdownDisplay = ({ targetDate, onUnlock }: { targetDate: string, onUnlo
       }
     };
 
-    // Calcula imediatamente
     setTimeLeft(calculateTimeLeft());
 
-    // Atualiza a cada segundo
     const timer = setInterval(() => {
       setTimeLeft(calculateTimeLeft());
     }, 1000);
@@ -215,7 +218,6 @@ const Quiz: React.FC = () => {
 
   const currentQuestion = config.questions[currentQuestionIndex];
 
-  // Função chamada quando o cronômetro chega a zero
   const handleUnlock = () => {
     setIsTimeLocked(false);
     Swal.fire({
@@ -297,8 +299,10 @@ const Quiz: React.FC = () => {
       const newQuestion: Question = {
         questionText: 'Nova Pergunta',
         options: [
-          { text: 'Opção Correta', isCorrect: true },
+          { text: 'Opção 1', isCorrect: true },
           { text: 'Opção 2', isCorrect: false },
+          { text: 'Opção 3', isCorrect: false },
+          { text: 'Opção 4', isCorrect: false },
         ],
         explanation: 'Explicação para a resposta da nova pergunta.',
       };
@@ -319,7 +323,6 @@ const Quiz: React.FC = () => {
     Swal.fire('Salvo!', 'Seu quiz foi salvo com sucesso.', 'success');
   };
 
-  // Botão para o Jogador criar o próprio quiz ao final (Limpa a URL)
   const handleCreateOwn = () => {
      window.location.href = window.location.pathname; 
   }
@@ -406,6 +409,16 @@ const Quiz: React.FC = () => {
               <input type="text" value={config.subtitle} onChange={(e) => setConfig({ ...config, subtitle: e.target.value })}
                 className="mt-1 block w-full rounded-md border-input bg-background p-2 shadow-sm focus:border-ring focus:ring focus:ring-ring focus:ring-opacity-50" />
             </label>
+            <label className="block text-lg font-semibold mb-2 mt-4">
+              Data de Disponibilidade (opcional)
+              <input
+                type="datetime-local"
+                value={config.unlockDate || ''}
+                onChange={(e) => setConfig({ ...config, unlockDate: e.target.value })}
+                className="mt-1 block w-full rounded-md border-input bg-background p-2 shadow-sm focus:border-ring focus:ring focus:ring-ring focus:ring-opacity-50"
+              />
+              <p className="text-sm text-muted-foreground mt-1">Se preenchido, o quiz ficará indisponível até esta data.</p>
+            </label>
           </div>
 
           <h2 className="text-2xl font-bold mb-6 text-center">Perguntas</h2>
@@ -422,8 +435,8 @@ const Quiz: React.FC = () => {
               </div>
               <label className="block text-lg font-semibold mb-2">
                 Texto da Pergunta
-                <input
-                  type="text"
+                <textarea
+                  rows={2}
                   value={question.questionText}
                   onChange={(e) => handleQuestionChange(qIndex, 'questionText', e.target.value)}
                   className="mt-1 block w-full rounded-md border-input bg-background p-2 shadow-sm focus:border-ring focus:ring focus:ring-ring focus:ring-opacity-50"
@@ -451,8 +464,8 @@ const Quiz: React.FC = () => {
               </div>
               <label className="block text-lg font-semibold mb-2 mt-4">
                 Explicação
-                <input
-                  type="text"
+                <textarea
+                  rows={4}
                   value={question.explanation}
                   onChange={(e) => handleQuestionChange(qIndex, 'explanation', e.target.value)}
                   className="mt-1 block w-full rounded-md border-input bg-background p-2 shadow-sm focus:border-ring focus:ring focus:ring-ring focus:ring-opacity-50"
@@ -556,15 +569,15 @@ const Quiz: React.FC = () => {
               </button>
             </div>
           ) : (
-            <div className="flex flex-col sm:flex-row justify-center items-center gap-4">            
-              <button className="btn-romantic" onClick={() => setQuizStarted(true)}>
+            <div className="flex flex-col sm:flex-row justify-center items-center gap-4 w-full">
+              <button className="btn-romantic w-full sm:w-auto" onClick={() => setQuizStarted(true)}>
                 Começar o Quiz!
               </button>
-              
+
               {!isReadOnly && (
                 <>
-                  <button className="btn-romantic" onClick={() => setIsEditing(true)}>Editar Perguntas</button>
-                  <button className="btn-romantic" onClick={handleShare}>Compartilhar</button>
+                  <button className="btn-romantic w-full sm:w-auto" onClick={() => setIsEditing(true)}>Editar Perguntas</button>
+                  <button className="btn-romantic w-full sm:w-auto" onClick={handleShare}>Compartilhar</button>
                 </>
               )}
             </div>
@@ -610,7 +623,6 @@ const Quiz: React.FC = () => {
             </div>
           </div>
           
-          {/* Opção para quem recebeu o link também criar o seu */}
           {isReadOnly && (
              <button className="btn-romantic mt-8" onClick={handleCreateOwn}>Criar meu próprio Quiz</button>
           )}
