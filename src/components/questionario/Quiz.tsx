@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import Swal from 'sweetalert2';
 import confetti from 'canvas-confetti';
-import { Heart, Gift, Sparkles, Clock, Calendar } from 'lucide-react'; // Ícones já estavam corretos
+import { Heart, Gift, Sparkles, Clock, Calendar, Share2 } from 'lucide-react'; // Ícones já estavam corretos
 
 // --- Definição dos Tipos ---
 type Option = {
@@ -540,7 +540,7 @@ const Quiz: React.FC = () => {
         <div className="absolute top-10 left-10 text-primary/30 animate-float"><Heart className="w-8 h-8" fill="currentColor" /></div>
         <div className="absolute top-20 right-12 text-primary/20 animate-float delay-300"><Heart className="w-6 h-6" fill="currentColor" /></div>
         
-        <div className="card-elegant text-center animate-fade-up max-w-md w-full">
+        <div className="card-elegant text-center animate-fade-up max-w-md w-full relative">
           <div className="mb-6 flex justify-center">
             <div className="relative">
               <Heart 
@@ -566,33 +566,30 @@ const Quiz: React.FC = () => {
               </button>
             </div>
           ) : (
-            /* --- INICIO DA ALTERAÇÃO DOS BOTÕES --- */
-            <div className="flex flex-col sm:flex-row justify-center items-center gap-4 w-full mt-6">            
-              <button 
-                className="btn-romantic w-full sm:w-auto sm:min-w-[200px] shadow-lg hover:scale-105 transition-transform" 
-                onClick={() => setQuizStarted(true)}
-              >
-                Começar o Quiz!
-              </button>
-              
+            <>
+              <div className="flex flex-col sm:flex-row justify-center items-center gap-4 w-full mt-6">            
+                <button 
+                  className="btn-romantic w-full sm:w-auto sm:min-w-[200px] shadow-lg hover:scale-105 transition-transform" 
+                  onClick={() => setQuizStarted(true)}
+                >
+                  Começar o Quiz!
+                </button>
+                
+                {!isReadOnly && (
+                    <button 
+                      className="btn-romantic w-full sm:w-auto sm:min-w-[200px] shadow-lg hover:scale-105 transition-transform" 
+                      onClick={() => setIsEditing(true)}
+                    >
+                      Editar Perguntas
+                    </button>
+                )}
+              </div>
               {!isReadOnly && (
-                <>
-                  <button 
-                    className="btn-romantic w-full sm:w-auto sm:min-w-[200px] shadow-lg hover:scale-105 transition-transform" 
-                    onClick={() => setIsEditing(true)}
-                  >
-                    Editar Perguntas
-                  </button>
-                  <button 
-                    className="btn-romantic w-full sm:w-auto sm:min-w-[200px] shadow-lg hover:scale-105 transition-transform" 
-                    onClick={handleShare}
-                  >
-                    Compartilhar
-                  </button>
-                </>
+                <button onClick={handleShare} className="absolute top-4 right-4 p-2 text-muted-foreground hover:text-primary hover:bg-primary/10 rounded-full transition-colors" aria-label="Compartilhar">
+                  <Share2 className="w-5 h-5" />
+                </button>
               )}
-            </div>
-            /* --- FIM DA ALTERAÇÃO DOS BOTÕES --- */
+            </>
           )}
         </div>
       </main>
