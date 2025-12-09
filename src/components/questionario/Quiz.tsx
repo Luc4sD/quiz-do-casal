@@ -107,6 +107,9 @@ const Quiz: React.FC = () => {
   const [selectedOption, setSelectedOption] = useState<Option | null>(null);
   const [isAnswered, setIsAnswered] = useState(false);
   const [showResults, setShowResults] = useState(false);
+  
+  // Estado para controlar se é apenas visualização (recebeu link)
+  const [isReadOnly, setIsReadOnly] = useState(false); 
 
   useEffect(() => {
     try {
@@ -114,13 +117,14 @@ const Quiz: React.FC = () => {
       const dataFromUrl = urlParams.get('data');
 
       if (dataFromUrl) {
-        // Decodifica os dados da URL usando a função nativa do browser
+        // Se tem dados na URL, é um JOGADOR (apenas leitura)
         const jsonString = b64DecodeUnicode(dataFromUrl);
         const parsedData = JSON.parse(jsonString);
         setConfig(parsedData);
-        localStorage.setItem('customQuizData', JSON.stringify(parsedData));
-        window.history.replaceState({}, document.title, window.location.pathname);
+        setIsReadOnly(true); 
+        // OBS: Não limpamos mais a URL aqui para garantir que o estado persista se a página recarregar
       } else {
+        // Se NÃO tem dados na URL, verificamos o LocalStorage (modo Editor)
         const savedData = localStorage.getItem('customQuizData');
         if (savedData) {
           setConfig(JSON.parse(savedData));
@@ -132,7 +136,6 @@ const Quiz: React.FC = () => {
     }
   }, []);
 
-  const { questions, prize, startIcon, title, subtitle } = config;
   const currentQuestion = config.questions[currentQuestionIndex];
 
   const handleAnswerOptionClick = (option: Option) => {
@@ -234,6 +237,11 @@ const Quiz: React.FC = () => {
     Swal.fire('Salvo!', 'Seu quiz foi salvo com sucesso.', 'success');
   };
 
+  // Botão para o Jogador criar o próprio quiz ao final
+  const handleCreateOwn = () => {
+     window.location.href = window.location.pathname; // Recarrega sem parametros
+  }
+
   const handleShare = () => {
     const jsonString = JSON.stringify(config);
     const base64String = b64EncodeUnicode(jsonString);
@@ -293,7 +301,7 @@ const Quiz: React.FC = () => {
     }
   }, [showResults]);
 
-  // --- Tela de Edição ---
+  // --- TELA DE EDIÇÃO (Visível apenas para o Editor) ---
   if (isEditing) {
     return (
       <main className="container mx-auto p-4">
@@ -432,7 +440,7 @@ const Quiz: React.FC = () => {
     );
   }
 
-  // --- Tela de Início ---
+  // --- TELA INICIAL (Boas-vindas) ---
   if (!quizStarted) {
     return (
       <main className="container mx-auto p-4 flex flex-col items-center justify-center min-h-screen px-6 py-12">
@@ -472,15 +480,21 @@ const Quiz: React.FC = () => {
             <button className="btn-romantic" onClick={() => setQuizStarted(true)}>
               Começar o Quiz!
             </button>
-            <button 
-              className="btn-romantic"
-              onClick={() => setIsEditing(true)}
-            >
-              Editar Perguntas
-            </button>
-            <button className="btn-romantic" onClick={handleShare}>
-              Compartilhar
-            </button>
+            
+            {/* Esconde botões de edição se for somente leitura */}
+            {!isReadOnly && (
+              <>
+                <button 
+                  className="btn-romantic"
+                  onClick={() => setIsEditing(true)}
+                >
+                  Editar Perguntas
+                </button>
+                <button className="btn-romantic" onClick={handleShare}>
+                  Compartilhar
+                </button>
+              </>
+            )}
           </div>
         </div>
       </main>
@@ -552,12 +566,19 @@ const Quiz: React.FC = () => {
           <p className="mt-8 font-lato text-muted-foreground animate-fade-up delay-500">
             Te amo infinitamente! ❤️
           </p>
+          
+          {/* Opção para quem recebeu o link também criar o seu */}
+          {isReadOnly && (
+             <button className="btn-romantic mt-8" onClick={handleCreateOwn}>
+               Criar meu próprio Quiz
+             </button>
+          )}
         </div>
       </main>
     );
   }
 
-  // --- Tela do Quiz ---
+  // --- TELA DE PERGUNTAS (Jogo Ativo) ---
   return (
     <main className="container mx-auto p-4 flex items-center justify-center min-h-screen">
       <div className="w-full max-w-2xl">
